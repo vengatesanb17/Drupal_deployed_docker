@@ -1,0 +1,48 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  dockerRegistryServiceConnection: 'DRSC_Azure'  # Replace with your Docker registry connection name
+  imageName: 'drupal-apache-mysql'
+
+stages:
+- stage: Deploy
+  displayName: 'Deploy Docker Containers to Azure'
+  jobs:
+  - job: Deploy
+    displayName: 'Deploy Drupal, Apache, and MySQL Containers'
+    steps:
+    - task: Docker@2
+      displayName: 'Pull MySQL Image'
+      inputs:
+        command: 'pull'
+        containerRegistry: $(dockerRegistryServiceConnection)
+        repository: 'mysql'
+        tag: 'latest'
+
+    - task: Docker@2
+      displayName: 'Pull PHP Apache Image'
+      inputs:
+        command: 'pull'
+        containerRegistry: $(dockerRegistryServiceConnection)
+        repository: 'php'
+        tag: '8.1.1-apache'
+
+    - task: Docker@2
+      displayName: 'Pull Drupal Image'
+      inputs:
+        command: 'pull'
+        containerRegistry: $(dockerRegistryServiceConnection)
+        repository: 'drupal'
+        tag: 'latest'
+
+    - task: AzureWebAppContainer@2
+      displayName: 'Deploy Docker Compose to Azure Web App'
+      inputs:
+        azureSubscription: 'free trial'  # Replace with your Azure subscription name
+        appName: 'Deploy-Drupal-WebApp'  # Replace with your Azure Web App name
+        imageName: 'mysql:latest, php:8.1.1-apache, drupal:latest'  # Use comma-separated list for multiple containers
+        containerCommand: 'docker-compose up -d'  # Command to run Docker Compose in the Azure Web App container
