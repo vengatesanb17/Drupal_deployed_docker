@@ -1,0 +1,44 @@
+version: '3'
+services:
+  db_container:
+    image: mysql:latest
+    environment:
+      - MYSQL_DATABASE=Drupal_db
+      - MYSQL_USER=DevOps_user
+      - MYSQL_PASSWORD=P@ssw0rd@123!
+      - MYSQL_ROOT_PASSWORD=RootP@ssw0rd123!
+    volumes:
+      - "./local_db_script:/docker-entrypoint-initdb.d"
+    networks:
+      - Drupal_ntw
+
+  apache_php_container:
+    depends_on:
+      - db_container
+    image: php:8.1.1-apache
+    volumes:
+      - "./php_folder:/var/www/html"
+    ports:
+      - "8081:80"
+    networks:
+      - Drupal_ntw
+
+  drupal_apache_container:
+    depends_on:
+      - db_container
+    image: drupal:latest
+    ports:
+      - "8080:80"
+    environment:
+      - DRUPAL_DB_HOST=db_container
+      - DRUPAL_DB_NAME=Drupal_db
+      - DRUPAL_DB_USER=DevOps_user
+      - DRUPAL_DB_PASSWORD=P@ssw0rd@123!
+    networks:
+      - Drupal_ntw
+
+networks:
+  Drupal_ntw:
+    driver: bridge
+
+
